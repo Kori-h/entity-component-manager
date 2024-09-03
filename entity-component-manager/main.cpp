@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "entity_component_manager.hpp"
 
-EntityComponentManager ecm;
+EntityComponentManager entityComponentManager;
 
 struct Vector2D
 {
@@ -25,6 +25,24 @@ struct AABB
 	Vector2D min;
 	Vector2D max;
 };
+
+void CreatePlayer()
+{
+	std::uniform_real_distribution<float> positionRand(-100.0f, 100.0f);
+	std::uniform_real_distribution<float> scaleRand(1.0f, 2.0f);
+	std::uniform_real_distribution<float> velocityRand(-5.0f, 5.0f);
+
+	Entity player = entityComponentManager.createEntity();
+
+	Transform& transform = entityComponentManager.createComponent<Transform>(player);
+	transform.position = { positionRand(dre), positionRand(dre) };
+	transform.scale = { scaleRand(dre), scaleRand(dre) };
+
+	Velocity& velocity = entityComponentManager.createComponent<Velocity>(player);
+	velocity.vector = { velocityRand(dre), velocityRand(dre) };
+
+	entityComponentManager.createComponent<AABB>(player);
+}
 
 void CalculateMovement(Transform& tf, Velocity& vel)
 {
@@ -57,6 +75,7 @@ void CollisionSystem(EntityComponentManager& ecm)
 				a.min.y <= b.max.y && a.max.y >= b.min.y))
 			{
 				++count;
+				y = std::numeric_limits<size_t>().max() - 1;
 			}
 		}
 	}
@@ -64,57 +83,45 @@ void CollisionSystem(EntityComponentManager& ecm)
 
 int main()
 {
-	std::random_device rd;
-	std::default_random_engine dre(rd());
-	std::uniform_real_distribution<float> positionRand(-100.0f, 100.0f);
-	std::uniform_real_distribution<float> scaleRand(1.0f, 2.0f);
-	std::uniform_real_distribution<float> velocityRand(-5.0f, 5.0f);
-	
-	ecm.registerComponent<Transform>();
-	ecm.registerComponent<Velocity>();
-	ecm.registerComponent<AABB>();
-
-	ecm.registerFunction<Transform, Velocity>(CalculateMovement);
-	ecm.registerFunction<AABB, Transform>(CalculateAABB);
-	ecm.registerSystem(CollisionSystem);
-
-	for (size_t x = 0; x < MAX_ENTITY_COUNT; ++x)
+	try
 	{
-		Entity player = ecm.createEntity();
+		entityComponentManager.registerComponent<Transform>();
+		entityComponentManager.registerComponent<Velocity>();
+		entityComponentManager.registerComponent<AABB>();
 
-		Transform& transform = ecm.createComponent<Transform>(player);
-		transform.position = { positionRand(dre), positionRand(dre) };
-		transform.scale = { scaleRand(dre), scaleRand(dre) };
+		entityComponentManager.registerFunction<Transform, Velocity>(CalculateMovement);
+		entityComponentManager.registerFunction<AABB, Transform>(CalculateAABB);
 
-		Velocity& velocity = ecm.createComponent<Velocity>(player);
-		velocity.vector = { velocityRand(dre), velocityRand(dre) };
+		entityComponentManager.registerSystem(CollisionSystem);
 
-		ecm.createComponent<AABB>(player);
+		for (size_t x = 0; x < MAX_ENTITY_COUNT; ++x)
+		{
+			CreatePlayer();
+		}
+
+		float dt = 0;
+		size_t frameCount = 0;
+
+		while (true)
+		{
+			auto start_time = std::chrono::high_resolution_clock::now();
+			entityComponentManager.update();
+			auto end_time = std::chrono::high_resolution_clock::now();
+
+			std::chrono::duration<float> time = end_time - start_time;
+			++frameCount;
+
+			if ((frameCount % 60) == 0)
+			{
+				dt = time.count();
+				std::cout << "[ Frame: " << frameCount << " | FPS: " << (1.0f / dt) << " ]" << std::setprecision(2) << std::fixed << std::endl;
+			}
+		}
 	}
-
-	int total_iterations = 100;
-	int iterations = total_iterations;
-	float duration = 0;
-	float dt = 0;
-
-	while (iterations--)
-	{	
-		std::chrono::steady_clock::time_point startTime = std::chrono::high_resolution_clock::now();
-		// start of loop
-
-		ecm.update();
-
-		// end of loop
-		std::chrono::steady_clock::time_point stopTime = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<float> elapsedTime = stopTime - startTime;
-		dt = elapsedTime.count();
-		duration += dt;
+	catch (std::exception e)
+	{
+		std::cout << e.what() << std::endl;
 	}
-
-	std::cout << "Average Time: " << duration / total_iterations * 1000.0f << "ms" << std::endl;
-	std::cout << "Duration: " << duration << "s" << std::endl;
-	std::cout << "FPS: " << total_iterations / duration << " fps" << std::endl;
-	std::cout << "Collisions: " << count << std::endl;
 
 	return 0;
 }

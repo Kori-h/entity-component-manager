@@ -42,4 +42,8 @@ static constexpr float M_INV_PI		= 1.0f/M_PI;
 static constexpr double M_RAD_DEG	= M_PI/180.0f;
 static constexpr double M_DEG_RAD	= 180.0f/M_PI;
 
+// RANDOMISERS
+static std::random_device rd;
+static std::default_random_engine dre(rd());
+
 #endif __PCH__ // end of __PCH__

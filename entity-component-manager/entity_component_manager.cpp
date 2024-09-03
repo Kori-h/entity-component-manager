@@ -22,6 +22,7 @@ Entity EntityComponentManager::createEntity()
 void EntityComponentManager::destroyEntity(Entity entity)
 {
 	entityManager->deleteEntity(entity);
+	componentManager->disableComponents(entity);
 }
 
 void EntityComponentManager::registerSystem(std::function<void(EntityComponentManager&)> system)

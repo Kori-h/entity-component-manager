@@ -11,19 +11,22 @@
 //  DECLARATIONS
 //===================//
 
-size_t const MAX_COMPONENT_COUNT = 10000;
+size_t const MAX_COMPONENT_COUNT = 1024;
 
 class Pool
 {
     public:
         Pool() = default;
-        virtual ~Pool() = default;
+        virtual ~Pool() = default;       
+        virtual void set(size_t index, bool active) = 0;
 
     protected:
+        std::bitset<MAX_COMPONENT_COUNT> pool;
+
         Pool(Pool const&) = delete;
         Pool(Pool&&) = delete;
         Pool& operator=(Pool const&) = delete;
-        Pool& operator=(Pool&&) = delete;
+        Pool& operator=(Pool&&) = delete;       
 };
 
 template <typename T>
@@ -31,6 +34,9 @@ class ComponentPool : public Pool
 {
     public:
         ComponentPool();
+
+        void set(size_t index, bool active) override;
+
         void enableComponent(size_t index);
         T& getComponent(size_t index);
         void disableComponent(size_t index);
@@ -41,8 +47,7 @@ class ComponentPool : public Pool
 
     protected:
         std::vector<T> components;
-        std::vector<size_t> activeComponents;
-        std::bitset<MAX_COMPONENT_COUNT> componentPool;
+        std::vector<size_t> activeComponents;       
 };
 
 class ComponentManager
@@ -56,6 +61,7 @@ class ComponentManager
         template<typename T> 
         ComponentPool<T>& getComponentPool();
 
+        void disableComponents(size_t index);
         void reset();
 
     protected:
@@ -68,28 +74,41 @@ class ComponentManager
 
 template<typename T>
 ComponentPool<T>::ComponentPool()
-    : components(MAX_COMPONENT_COUNT), activeComponents(), componentPool()
+    : components(MAX_COMPONENT_COUNT), activeComponents()
 {
+    pool.reset();
+}
 
+template<typename T>
+void ComponentPool<T>::set(size_t index, bool active)
+{
+    if (active == true)
+    {
+        enableComponent(index);
+    }
+    else
+    {
+        disableComponent(index);
+    }
 }
 
 template<typename T>
 void ComponentPool<T>::enableComponent(size_t index)
 {
-    if (index >= componentPool.size())
+    if (index >= pool.size())
     {
         throw std::exception("Index out of bounds");
     }
 
     components[index] = T();
-    componentPool[index] = true;
+    pool[index] = true;
     activeComponents.push_back(index);
 }
 
 template<typename T>
 T& ComponentPool<T>::getComponent(size_t index)
 {
-    if (index >= componentPool.size())
+    if (index >= pool.size())
     {
         throw std::exception("Index out of bounds");
     }
@@ -100,12 +119,12 @@ T& ComponentPool<T>::getComponent(size_t index)
 template<typename T>
 void ComponentPool<T>::disableComponent(size_t index)
 {
-    if (index >= componentPool.size())
+    if (index >= pool.size())
     {
         throw std::exception("Index out of bounds for component pool.");
     }
 
-    componentPool[index] = false;
+    pool[index] = false;
 
     std::vector<size_t>::iterator it = std::find(activeComponents.begin(), activeComponents.end(), index);
     if (it != activeComponents.end())
@@ -117,12 +136,12 @@ void ComponentPool<T>::disableComponent(size_t index)
 template<typename T>
 bool ComponentPool<T>::isComponentActive(size_t index)
 {
-    if (index >= componentPool.size())
+    if (index >= pool.size())
     {
         throw std::exception("Index out of bounds for component pool");
     }
 
-    return componentPool[index];
+    return pool[index];
 }
 
 template<typename T>
@@ -140,7 +159,7 @@ std::vector<size_t>& ComponentPool<T>::getActiveComponents()
 template<typename T>
 void ComponentPool<T>::reset()
 {
-    componentPool.reset();
+    pool.reset();
 }
 
 template<typename T>

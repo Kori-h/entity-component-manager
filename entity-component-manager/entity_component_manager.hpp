@@ -35,13 +35,11 @@ template<typename T, typename U>
 class EntityUpdateFunction : public EntityUpdateFunctionBase
 {
 	public:
-		EntityUpdateFunction(std::function<void(T&, U&)> function)
-			: function_(function) {};
-
+		EntityUpdateFunction(std::function<void(T&, U&)> function);
 		void update(EntityComponentManager& ecm, Entity entity) override;
 
 	protected:
-		std::function<void(T&, U&)> function_;
+		std::function<void(T&, U&)> function;
 };
 
 class EntityComponentManager
@@ -95,11 +93,18 @@ class EntityComponentManager
 //===================//
 
 template<typename T, typename U>
+EntityUpdateFunction<T, U>::EntityUpdateFunction(std::function<void(T&, U&)> function) :
+	function(function)
+{
+
+}
+
+template<typename T, typename U>
 void EntityUpdateFunction<T, U>::update(EntityComponentManager& ecm, Entity entity)
 {
 	if (ecm.hasComponent<T>(entity) && ecm.hasComponent<U>(entity))
 	{
-		function_(ecm.getComponent<T>(entity), ecm.getComponent<U>(entity));
+		function(ecm.getComponent<T>(entity), ecm.getComponent<U>(entity));
 	}
 }
 
