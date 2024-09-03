@@ -8,13 +8,41 @@
 #include "pch.hpp"
 #include "entity_manager.hpp"
 #include "component_manager.hpp"
-#include "system_manager.hpp"
 
 //===================//
 //  DECLARATIONS
 //===================//
 
 using Entity = size_t;
+
+class EntityUpdateFunctionBase
+{
+	friend class EntityComponentManager;
+
+	public:
+		EntityUpdateFunctionBase() = default;
+		virtual ~EntityUpdateFunctionBase() = default;
+		virtual void update(EntityComponentManager& ecm, Entity entity) = 0;
+
+	protected:
+		EntityUpdateFunctionBase(EntityUpdateFunctionBase const&) = delete;
+		EntityUpdateFunctionBase(EntityUpdateFunctionBase&&) = delete;
+		EntityUpdateFunctionBase& operator=(EntityUpdateFunctionBase const&) = delete;
+		EntityUpdateFunctionBase& operator=(EntityUpdateFunctionBase&&) = delete;
+};
+
+template<typename T, typename U>
+class EntityUpdateFunction : public EntityUpdateFunctionBase
+{
+	public:
+		EntityUpdateFunction(std::function<void(T&, U&)> function)
+			: function_(function) {};
+
+		void update(EntityComponentManager& ecm, Entity entity) override;
+
+	protected:
+		std::function<void(T&, U&)> function_;
+};
 
 class EntityComponentManager
 {
@@ -42,15 +70,38 @@ class EntityComponentManager
 		template<typename T>
 		std::vector<T>& getComponents();
 
+		template<typename T>
+		ComponentPool<T>& getComponentPool();
+
+		template<typename T, typename U>
+		void registerFunction(std::function<void(T&, U&)> function);
+
+		void registerSystem(std::function<void(EntityComponentManager&)> system);
+
 		std::vector<size_t>& getAvailableEntities();
 
+		void update();
 		void reset();
 
 	protected:
 		std::unique_ptr<EntityManager> entityManager;
 		std::unique_ptr<ComponentManager> componentManager;
-		std::unique_ptr<SystemManager> systemManager;
+		std::vector<std::unique_ptr<EntityUpdateFunctionBase>> functions;
+		std::vector<std::function<void(EntityComponentManager&)>> systems;
 };
+
+//===================//
+//  DEFINITIONS
+//===================//
+
+template<typename T, typename U>
+void EntityUpdateFunction<T, U>::update(EntityComponentManager& ecm, Entity entity)
+{
+	if (ecm.hasComponent<T>(entity) && ecm.hasComponent<U>(entity))
+	{
+		function_(ecm.getComponent<T>(entity), ecm.getComponent<U>(entity));
+	}
+}
 
 template<typename T>
 void EntityComponentManager::registerComponent()
@@ -94,4 +145,21 @@ std::vector<T>& EntityComponentManager::getComponents()
 	return pool.getComponents();
 }
 
+template<typename T>
+ComponentPool<T>& EntityComponentManager::getComponentPool()
+{
+	return componentManager->getComponentPool<T>();
+}
+
+template<typename T, typename U>
+void EntityComponentManager::registerFunction(std::function<void(T&, U&)> function)
+{
+	functions.push_back
+	(
+		std::make_unique<EntityUpdateFunction<T, U>>
+		(
+			function
+		)
+	);
+}
 #endif __ENTITY_COMPONENT_MANAGER__

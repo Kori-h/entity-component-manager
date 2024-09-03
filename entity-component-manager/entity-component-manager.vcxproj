@@ -131,14 +131,12 @@
     <ClCompile Include="entity_component_manager.cpp" />
     <ClCompile Include="entity_manager.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="system_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="component_manager.hpp" />
     <ClInclude Include="entity_component_manager.hpp" />
     <ClInclude Include="entity_manager.hpp" />
     <ClInclude Include="pch.hpp" />
-    <ClInclude Include="system_manager.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

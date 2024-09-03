@@ -11,7 +11,7 @@
 //  DECLARATIONS
 //===================//
 
-size_t const MAX_ENTITY_COUNT = 1024;
+size_t const MAX_ENTITY_COUNT = 10000;
 
 class EntityManager
 { 

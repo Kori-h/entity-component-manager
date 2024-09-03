@@ -8,10 +8,9 @@
 //  DEFINITIONS
 //===================//
 
-EntityManager::EntityManager()
+EntityManager::EntityManager() : marker(0), activeEntities(), entityPool()
 {
-    marker = 0;
-    entityPool.reset();
+
 }
 
 size_t EntityManager::newEntity()

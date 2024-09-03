@@ -8,11 +8,6 @@
 //  DEFINITIONS
 //===================//
 
-Pool::Pool()
-{
-
-}
-
 ComponentManager::ComponentManager()
 {
 	componentPools.clear();

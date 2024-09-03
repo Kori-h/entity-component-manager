@@ -27,15 +27,9 @@
     <ClCompile Include="entity_component_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="system_manager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="entity_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="component_manager.hpp">
@@ -44,7 +38,7 @@
     <ClInclude Include="entity_component_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="system_manager.hpp">
+    <ClInclude Include="entity_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
